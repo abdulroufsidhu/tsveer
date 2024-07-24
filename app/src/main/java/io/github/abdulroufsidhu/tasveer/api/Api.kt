@@ -9,10 +9,13 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.gson.gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 
 class Api {
 
@@ -31,6 +34,7 @@ class Api {
         }
     }
 
+    @Throws(Exception::class)
     suspend fun pexels(
         pageNumber: Int = 0,
         query: String = "",
@@ -41,7 +45,7 @@ class Api {
         val url = if (query.isNotBlank()) {
             "https://www.pexels.com/en-us/api/v3/search/photos?page=${pageNumber}&per_page=12&query=${query}&orientation=${orientation}&size=${size}&color=all&sort=${sort}&seo_tags=true"
         } else {
-            "https://www.pexels.com/en-us/api/v2/feed?seed=${Clock.System.now().toString().replace(":", " %3A").replace(" ", "+")}&per_page=12&seo_tags=true&page=${pageNumber}"
+            "https://www.pexels.com/en-us/api/v3/search/photos?page=${pageNumber}&per_page=12&query=nature&orientation=${orientation}&size=${size}&color=all&sort=${sort}&seo_tags=true"
         }
         val res = client.get(url) {
             header("Referer", "https://www.pexels.com/")
@@ -50,6 +54,7 @@ class Api {
         res.copy(data = res.data ?: emptyList())
     }
 
+    @Throws(Exception::class)
     suspend fun unsplash(
         pageNumber: Int,
         query: String = ""
@@ -62,7 +67,9 @@ class Api {
         val request = client.get(url)
         val response =
             if (query.isNotBlank()) request.body<UnsplashResponse>().result else request.body<List<UnsplashPic?>?>()
-        response?.filterNot { it?.urls?.full?.startsWith("https://plus.unsplash.com/") == true } ?: emptyList()
+        response?.filterNot { it?.urls?.full?.startsWith("https://plus.unsplash.com/") == true }
+            ?: emptyList()
     }
+
 }
 

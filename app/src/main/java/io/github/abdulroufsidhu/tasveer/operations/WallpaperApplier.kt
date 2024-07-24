@@ -2,10 +2,13 @@ package io.github.abdulroufsidhu.tasveer.operations
 
 import android.app.WallpaperManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.service.wallpaper.WallpaperService
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import io.github.abdulroufsidhu.tasveer.findActivity
@@ -14,14 +17,18 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URL
 
+private const val TAG = "wallpaper-applier"
+
 suspend fun Context.applyWallpaper(imageUrl: String, onDownloadComplete: (Boolean)->Unit) {
     withContext(Dispatchers.Main) {
         val imageUri = downloadImageToCache(this@applyWallpaper, imageUrl)
         onDownloadComplete(true)
-        if (imageUri != null) {
+        Log.i(TAG, "applyWallpaper: imageUri-> ${imageUri}")
+        if (imageUri != null ) {
             withContext(Dispatchers.Main) {
                 val wallpaperManager = WallpaperManager.getInstance(this@applyWallpaper)
                 val cropAndSetWallpaperIntent = wallpaperManager.getCropAndSetWallpaperIntent(imageUri)
+                cropAndSetWallpaperIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 this@applyWallpaper.startActivity(cropAndSetWallpaperIntent)
             }
         } else {
@@ -42,9 +49,8 @@ private suspend fun downloadImageToCache(context: Context, imageUrl: String): Ur
 
         val bitmap = BitmapFactory.decodeStream(inputStream)
 
-        // Save the bitmap to the app's cache directory and get its URI
-        val fileName = "temp_wallpaper.jpg" // Or a more unique name
-        val file = File(context.filesDir, fileName)
+        val fileName = "temp_wallpaper.jpg"
+        val file = File(context.getExternalFilesDir("wallpaper"), fileName)
         if (file.exists()) {
             file.delete()
         }
@@ -55,10 +61,10 @@ private suspend fun downloadImageToCache(context: Context, imageUrl: String): Ur
         FileProvider.getUriForFile(
             context,
             "${context.applicationContext.packageName}.fileprovider",
-            file
+            file,
         )
     } catch (e: Exception) {
-        // Handle exceptions (e.g., network errors)
+        Log.w(TAG, "downloadImageToCache: ", e)
         null
     }
 }

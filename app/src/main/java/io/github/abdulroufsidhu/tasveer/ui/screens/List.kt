@@ -1,13 +1,15 @@
 package io.github.abdulroufsidhu.tasveer.ui.screens
 
-import androidx.compose.foundation.clickable
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,23 +19,20 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import io.github.abdulroufsidhu.tasveer.MainViewModel
-import io.github.abdulroufsidhu.tasveer.R
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import io.github.abdulroufsidhu.tasveer.data.MainViewModel
 import io.github.abdulroufsidhu.tasveer.download
 import io.github.abdulroufsidhu.tasveer.scrollEndCallback
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun List(vm: MainViewModel) {
     val photos = vm.photos
@@ -76,37 +75,31 @@ fun List(vm: MainViewModel) {
                     singleLine = true,
                 )
             }
-            items(photos) { viewPhoto ->
+            itemsIndexed(photos) { index, viewPhoto ->
                 ElevatedCard(
                     modifier = Modifier
                         .padding(end = 16.dp, bottom = 16.dp)
-                        .clickable {
-                            ViewActivity.start(context, viewPhoto)
-                        },
+                        .combinedClickable(
+                            onClick = {
+                                ViewActivity.start(context, vm.photos.toTypedArray(), index)
+                            },
+                            onLongClick = {
+                                Toast
+                                    .makeText(context, "Downloading", Toast.LENGTH_SHORT)
+                                    .show()
+                                context.download(viewPhoto)
+                            }
+                        ),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.elevatedCardElevation(),
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(viewPhoto.fullUrl)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .networkCachePolicy(CachePolicy.ENABLED)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .error(R.drawable.ic_broken_image)
-                            .placeholder(R.drawable.image_loader)
-                            .build(),
+                    GlideImage(
+                        model = viewPhoto.thumbnailUrl,
                         contentDescription = "",
                         contentScale = ContentScale.FillWidth,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TextButton(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            context.download(viewPhoto)
-                        },
-                        shape = RectangleShape
                     ) {
-                        Text(text = "Download")
+                        it.diskCacheStrategy(DiskCacheStrategy.ALL)
                     }
                 }
             }

@@ -45,7 +45,7 @@ class Api {
         val url = if (query.isNotBlank()) {
             "https://www.pexels.com/en-us/api/v3/search/photos?page=${pageNumber}&per_page=12&query=${query}&orientation=${orientation}&size=${size}&color=all&sort=${sort}&seo_tags=true"
         } else {
-            "https://www.pexels.com/en-us/api/v3/search/photos?page=${pageNumber}&per_page=12&query=nature&orientation=${orientation}&size=${size}&color=all&sort=${sort}&seo_tags=true"
+            "https://www.pexels.com/en-us/api/v3/search/photos?page=${pageNumber}&per_page=12&query=wallpapers&orientation=${orientation}&size=${size}&color=all&sort=${sort}&seo_tags=true"
         }
         val res = client.get(url) {
             header("Referer", "https://www.pexels.com/")
@@ -62,7 +62,7 @@ class Api {
         val url = if (query.isNotBlank()) {
             "https://unsplash.com/napi/search/photos?page=${pageNumber}&per_page=12&umt_medium=referral&query=${query}"
         } else {
-            "https://unsplash.com/napi/photos?page=${pageNumber}&per_page=12&umt_medium=referral"
+            "https://unsplash.com/napi/topics/wallpapers/photos?page=${pageNumber}&per_page=12&umt_medium=referral"
         }
         val request = client.get(url)
         val response =
